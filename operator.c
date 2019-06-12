@@ -201,13 +201,30 @@ BINARY_ASSIGN_OPS(X)
 /* {{{ MINIT */
 static PHP_MINIT_FUNCTION(operator) {
 #define X(op, meth) \
-  s_##meth = zend_string_init(#meth, strlen(#meth), 1);
+  s_##meth = zend_string_init(#meth, strlen(#meth), 1); 
 GREATER_OPS(X)
 #undef X
 
 #define X(op, meth) \
   s_##meth = zend_string_init(#meth, strlen(#meth), 1); \
-  zend_set_user_opcode_handler(ZEND_##op, op_handler);
+  zend_set_user_opcode_handler(ZEND_##op, op_handler); 
+ALL_OPS(X)
+#undef X
+
+  return SUCCESS;
+}
+/* }}} */
+
+/* {{{ MSHUTDOWN */
+static PHP_MSHUTDOWN_FUNCTION(operator) {
+#define X(op, meth) \
+do { \
+  if (NULL != s_##meth) { \
+    zend_string_release(s_##meth); \
+    s_##meth = NULL; \
+  } \
+}while(0);
+GREATER_OPS(X)
 ALL_OPS(X)
 #undef X
 
@@ -222,7 +239,7 @@ static zend_module_entry operator_module_entry = {
   "operator",
   NULL, /* functions */
   PHP_MINIT(operator),
-  NULL, /* MSHUTDOWN */
+  PHP_MSHUTDOWN(operator), /* MSHUTDOWN */
   NULL, /* RINIT */
   NULL, /* RSHUTDOWN */
   NULL, /* MINFO */
@@ -234,3 +251,4 @@ static zend_module_entry operator_module_entry = {
 #ifdef COMPILE_DL_OPERATOR
 ZEND_GET_MODULE(operator)
 #endif
+
